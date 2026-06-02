@@ -157,13 +157,13 @@
             font-weight: bold;
         }
         
-        .btn-reset {
-            background: #e74c3c;
+        .btn-refresh {
+            background: #3498db;
             color: white;
         }
         
-        .btn-reset:hover {
-            background: #c0392b;
+        .btn-refresh:hover {
+            background: #2980b9;
         }
         
         .btn-download {
@@ -173,15 +173,6 @@
         
         .btn-download:hover {
             background: #219a52;
-        }
-        
-        .btn-refresh {
-            background: #3498db;
-            color: white;
-        }
-        
-        .btn-refresh:hover {
-            background: #2980b9;
         }
         
         .qr-url-display {
@@ -195,10 +186,24 @@
             text-align: center;
         }
         
-        .note {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            color: #856404;
+        .status {
+            font-size: 11px;
+            margin-top: 5px;
+            text-align: center;
+        }
+        
+        .status.online {
+            color: #27ae60;
+        }
+        
+        .status.offline {
+            color: #e74c3c;
+        }
+        
+        .setup-note {
+            background: #e8f4fd;
+            border: 1px solid #3498db;
+            color: #2980b9;
             padding: 10px;
             border-radius: 8px;
             font-size: 12px;
@@ -210,7 +215,7 @@
 <body>
     <div class="container">
         <h1>🔗 QR-код каталога кухонь</h1>
-        <p class="subtitle">Лемана ПРО • Автоматический счётчик</p>
+        <p class="subtitle">Лемана ПРО • Общий счётчик</p>
         
         <div class="content-wrapper">
             <div class="qr-section">
@@ -225,30 +230,28 @@
                 </div>
                 
                 <div class="timestamp" id="timestamp">Загрузка...</div>
+                <div class="status" id="status">Подключение...</div>
                 
                 <div class="buttons">
-                    <button class="btn btn-refresh" onclick="location.reload()">
+                    <button class="btn btn-refresh" onclick="loadCount()">
                         🔄 Обновить
                     </button>
                     <button class="btn btn-download" onclick="downloadQR()">
                         💾 Скачать QR
                     </button>
-                    <button class="btn btn-reset" onclick="resetCounter()">
-                        🗑 Сбросить
-                    </button>
                 </div>
             </div>
         </div>
         
-        <div class="note">
-            💡 QR-код ведёт на промежуточную страницу, которая считает переход и перенаправляет на Лемана ПРО
+        <div class="setup-note" id="setupNote">
+            ⚠️ Настройте Google Apps Script (см. инструкцию)
         </div>
     </div>
 
     <script>
         // НАСТРОЙКИ
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgrEY_QGHf7IB7etR5AdDoIYBs0HvBtaDqOnNY_CZhKMM3Zaj9yjFk8F2Uc90mO4sFdA/exec"; // Вставьте сюда URL после настройки
         const targetUrl = "https://lemanapro.ru/catalogue/kuhonnye-garnitury/";
-        const counterKey = "qr_counter_lemanapro";
         
         // Получаем текущий URL для создания правильной ссылки на redirect.html
         function getRedirectUrl() {
@@ -257,52 +260,35 @@
             return baseUrl + 'redirect.html';
         }
         
-        // Получаем текущий счётчик
-        function getCount() {
-            return parseInt(localStorage.getItem(counterKey)) || 0;
-        }
-        
-        // Загружаем счётчик с сервера (если есть)
-        async function loadCountFromServer() {
+        // Загружаем счётчик из Google Sheets
+        async function loadCount() {
+            if (SCRIPT_URL === 'ВАШ_URL_СКРИПТА') {
+                document.getElementById('counter').textContent = '?';
+                document.getElementById('status').textContent = 'Скрипт не настроен';
+                document.getElementById('status').className = 'status offline';
+                return 0;
+            }
+            
             try {
-                const response = await fetch('counter.txt?' + Date.now());
-                if (response.ok) {
-                    const text = await response.text();
-                    const count = parseInt(text.trim()) || 0;
-                    document.getElementById('counter').textContent = count;
-                    return count;
+                document.getElementById('status').textContent = 'Загрузка...';
+                const response = await fetch(SCRIPT_URL + '?action=get');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('counter').textContent = data.count;
+                    document.getElementById('timestamp').textContent = 
+                        '🕐 Обновлено: ' + new Date().toLocaleString('ru-RU');
+                    document.getElementById('status').textContent = '✓ Данные получены';
+                    document.getElementById('status').className = 'status online';
+                    document.getElementById('setupNote').style.display = 'none';
+                    return data.count;
                 }
-            } catch (e) {
-                console.log('Серверный счётчик недоступен, используется локальный');
+            } catch (error) {
+                console.error('Ошибка:', error);
+                document.getElementById('status').textContent = '✗ Ошибка подключения';
+                document.getElementById('status').className = 'status offline';
             }
-            return getCount();
-        }
-        
-        // Сброс счётчика
-        function resetCounter() {
-            if (confirm('Сбросить счётчик сканирований?')) {
-                localStorage.setItem(counterKey, 0);
-                document.getElementById('counter').textContent = '0';
-                document.getElementById('timestamp').textContent = 'Счётчик сброшен';
-            }
-        }
-        
-        // Обновление отображения
-        function updateDisplay(count) {
-            const counterElement = document.getElementById('counter');
-            const oldCount = parseInt(counterElement.textContent) || 0;
-            
-            counterElement.textContent = count;
-            
-            // Анимация при увеличении
-            if (count > oldCount) {
-                counterElement.classList.remove('animate');
-                void counterElement.offsetWidth;
-                counterElement.classList.add('animate');
-            }
-            
-            document.getElementById('timestamp').textContent = 
-                '🕐 Обновлено: ' + new Date().toLocaleString('ru-RU');
+            return 0;
         }
         
         // Генерация QR-кода
@@ -317,7 +303,7 @@
                 'Ссылка в QR: ' + redirectUrl;
             
             new QRCode(qrContainer, {
-                text: redirectUrl, // В QR-коде ссылка на redirect.html
+                text: redirectUrl,
                 width: 200,
                 height: 200,
                 colorDark: "#764ba2",
@@ -334,28 +320,19 @@
                 link.download = 'qr-code-lemanapro-kuhni.png';
                 link.href = qrImage.src;
                 link.click();
-            } else {
-                alert('QR-код ещё не сгенерирован');
             }
         }
         
-        // Автообновление каждые 5 секунд
+        // Автообновление каждые 10 секунд
         function startAutoRefresh() {
-            setInterval(async () => {
-                const count = await loadCountFromServer();
-                updateDisplay(count);
-            }, 5000);
+            setInterval(loadCount, 10000);
         }
         
         // Инициализация
-        window.addEventListener('DOMContentLoaded', async () => {
-            const count = await loadCountFromServer();
-            updateDisplay(count);
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCount();
             generateQR();
             startAutoRefresh();
-            
-            console.log('📊 Текущий счётчик:', count);
-            console.log('🔗 QR ведёт на:', getRedirectUrl());
         });
     </script>
 </body>
