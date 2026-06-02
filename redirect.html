@@ -22,20 +22,33 @@
     </style>
     
     <script>
-        // Увеличиваем счётчик в localStorage
-        const counterKey = "qr_counter_lemanapro";
-        let count = parseInt(localStorage.getItem(counterKey)) || 0;
-        count++;
-        localStorage.setItem(counterKey, count);
+        // НАСТРОЙКИ
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwgrEY_QGHf7IB7etR5AdDoIYBs0HvBtaDqOnNY_CZhKMM3Zaj9yjFk8F2Uc90mO4sFdA/exec'; // Вставьте сюда URL после настройки
         
-        // Перенаправляем на целевой сайт
-        window.location.href = "https://lemanapro.ru/catalogue/kuhonnye-garnitury/";
+        // Отправляем данные о переходе
+        async function incrementCounter() {
+            if (SCRIPT_URL === 'ВАШ_URL_СКРИПТА') {
+                console.log('Скрипт не настроен');
+                return;
+            }
+            
+            try {
+                await fetch(SCRIPT_URL + '?action=increment');
+            } catch (error) {
+                console.error('Ошибка счётчика:', error);
+            }
+        }
+        
+        // Выполняем при загрузке
+        incrementCounter().then(() => {
+            // Перенаправляем на целевой сайт
+            window.location.href = "https://lemanapro.ru/catalogue/kuhonnye-garnitury/";
+        });
     </script>
 </head>
 <body>
     <div class="message">
         <p>Переходим на страницу каталога...</p>
-        <p>Пожалуйста, подождите</p>
     </div>
 </body>
 </html>
