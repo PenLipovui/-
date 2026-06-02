@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR-код со счётчиком переходов</title>
+    
+    <!-- Подключаем библиотеку для генерации QR-кода -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .content-wrapper {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .qr-section {
+            flex: 1;
+            min-width: 200px;
+            text-align: center;
+        }
+        
+        #qrcode {
+            display: inline-block;
+            padding: 15px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin: 0 auto;
+        }
+        
+        #qrcode img {
+            display: block;
+        }
+        
+        .stats-section {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .counter-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .count-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .count-number {
+            font-size: 56px;
+            font-weight: bold;
+            color: #e74c3c;
+            line-height: 1;
+            transition: all 0.3s;
+        }
+        
+        .count-number.animate {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+        
+        .info-box {
+            background: #f0f0f0;
+            padding: 12px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .info-label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 13px;
+            color: #764ba2;
+            word-break: break-all;
+        }
+        
+        .timestamp {
+            font-size: 11px;
+            color: #999;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .btn-reset {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-reset:hover {
+            background: #c0392b;
+        }
+        
+        .btn-download {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-download:hover {
+            background: #219a52;
+        }
+        
+        .btn-refresh {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-refresh:hover {
+            background: #2980b9;
+        }
+        
+        .qr-url-display {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            color: #666;
+            margin-top: 10px;
+            word-break: break-all;
+            text-align: center;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-top: 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 QR-код каталога кухонь</h1>
+        <p class="subtitle">Лемана ПРО • Автоматический счётчик</p>
+        
+        <div class="content-wrapper">
+            <div class="qr-section">
+                <div id="qrcode"></div>
+                <div class="qr-url-display" id="qrUrlDisplay"></div>
+            </div>
+            
+            <div class="stats-section">
+                <div class="counter-box">
+                    <div class="count-label">Сканирований QR:</div>
+                    <div class="count-number" id="counter">0</div>
+                </div>
+                
+                <div class="timestamp" id="timestamp">Загрузка...</div>
+                
+                <div class="buttons">
+                    <button class="btn btn-refresh" onclick="location.reload()">
+                        🔄 Обновить
+                    </button>
+                    <button class="btn btn-download" onclick="downloadQR()">
+                        💾 Скачать QR
+                    </button>
+                    <button class="btn btn-reset" onclick="resetCounter()">
+                        🗑 Сбросить
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="note">
+            💡 QR-код ведёт на промежуточную страницу, которая считает переход и перенаправляет на Лемана ПРО
+        </div>
+    </div>
+
+    <script>
+        // НАСТРОЙКИ
+        const targetUrl = "https://lemanapro.ru/catalogue/kuhonnye-garnitury/";
+        const counterKey = "qr_counter_lemanapro";
+        
+        // Получаем текущий URL для создания правильной ссылки на redirect.html
+        function getRedirectUrl() {
+            const currentUrl = window.location.href;
+            const baseUrl = currentUrl.substring(0, currentUrl.lastIndexOf('/') + 1);
+            return baseUrl + 'redirect.html';
+        }
+        
+        // Получаем текущий счётчик
+        function getCount() {
+            return parseInt(localStorage.getItem(counterKey)) || 0;
+        }
+        
+        // Загружаем счётчик с сервера (если есть)
+        async function loadCountFromServer() {
+            try {
+                const response = await fetch('counter.txt?' + Date.now());
+                if (response.ok) {
+                    const text = await response.text();
+                    const count = parseInt(text.trim()) || 0;
+                    document.getElementById('counter').textContent = count;
+                    return count;
+                }
+            } catch (e) {
+                console.log('Серверный счётчик недоступен, используется локальный');
+            }
+            return getCount();
+        }
+        
+        // Сброс счётчика
+        function resetCounter() {
+            if (confirm('Сбросить счётчик сканирований?')) {
+                localStorage.setItem(counterKey, 0);
+                document.getElementById('counter').textContent = '0';
+                document.getElementById('timestamp').textContent = 'Счётчик сброшен';
+            }
+        }
+        
+        // Обновление отображения
+        function updateDisplay(count) {
+            const counterElement = document.getElementById('counter');
+            const oldCount = parseInt(counterElement.textContent) || 0;
+            
+            counterElement.textContent = count;
+            
+            // Анимация при увеличении
+            if (count > oldCount) {
+                counterElement.classList.remove('animate');
+                void counterElement.offsetWidth;
+                counterElement.classList.add('animate');
+            }
+            
+            document.getElementById('timestamp').textContent = 
+                '🕐 Обновлено: ' + new Date().toLocaleString('ru-RU');
+        }
+        
+        // Генерация QR-кода
+        function generateQR() {
+            const qrContainer = document.getElementById("qrcode");
+            qrContainer.innerHTML = '';
+            
+            const redirectUrl = getRedirectUrl();
+            
+            // Показываем URL в QR
+            document.getElementById('qrUrlDisplay').textContent = 
+                'Ссылка в QR: ' + redirectUrl;
+            
+            new QRCode(qrContainer, {
+                text: redirectUrl, // В QR-коде ссылка на redirect.html
+                width: 200,
+                height: 200,
+                colorDark: "#764ba2",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+        
+        // Скачивание QR-кода
+        function downloadQR() {
+            const qrImage = document.querySelector('#qrcode img');
+            if (qrImage) {
+                const link = document.createElement('a');
+                link.download = 'qr-code-lemanapro-kuhni.png';
+                link.href = qrImage.src;
+                link.click();
+            } else {
+                alert('QR-код ещё не сгенерирован');
+            }
+        }
+        
+        // Автообновление каждые 5 секунд
+        function startAutoRefresh() {
+            setInterval(async () => {
+                const count = await loadCountFromServer();
+                updateDisplay(count);
+            }, 5000);
+        }
+        
+        // Инициализация
+        window.addEventListener('DOMContentLoaded', async () => {
+            const count = await loadCountFromServer();
+            updateDisplay(count);
+            generateQR();
+            startAutoRefresh();
+            
+            console.log('📊 Текущий счётчик:', count);
+            console.log('🔗 QR ведёт на:', getRedirectUrl());
+        });
+    </script>
+</body>
+</html>

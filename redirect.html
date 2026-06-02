@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перенаправление...</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f5f5f5;
+        }
+        .message {
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+    
+    <script>
+        // Увеличиваем счётчик в localStorage
+        const counterKey = "qr_counter_lemanapro";
+        let count = parseInt(localStorage.getItem(counterKey)) || 0;
+        count++;
+        localStorage.setItem(counterKey, count);
+        
+        // Перенаправляем на целевой сайт
+        window.location.href = "https://lemanapro.ru/catalogue/kuhonnye-garnitury/";
+    </script>
+</head>
+<body>
+    <div class="message">
+        <p>Переходим на страницу каталога...</p>
+        <p>Пожалуйста, подождите</p>
+    </div>
+</body>
+</html>
